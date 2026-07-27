@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ordenador de Pedidos</title>
+<meta name="description" content="Convierte tus conversaciones de WhatsApp en presupuestos ordenados, con seguimiento de pagos. No reemplaza la boleta o factura electrónica del SII.">
+<meta name="theme-color" content="#16231C">
+
+<!-- Política de seguridad de contenido: solo permite cargar recursos de este
+     mismo sitio, de Google Fonts, y solo permite llamadas de red hacia la
+     API de Anthropic o tu propio Worker (*.workers.dev). Esto reduce el
+     impacto de un eventual XSS: aunque alguien lograra inyectar HTML,
+     no podría cargar scripts externos ni exfiltrar datos a otro dominio. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; connect-src 'self' https://api.anthropic.com https://*.workers.dev; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'self';">
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">Del chat al presupuesto</p>
+  <h1>Ordenador de Pedidos</h1>
+  <p class="lede">Pega tu conversación de WhatsApp, revisa el borrador, marca qué está pagado y guarda el presupuesto. Esto es un resumen interno para ti, no un documento tributario. Todo en menos de un minuto.</p>
+
+  <div class="install-banner" id="installBanner">
+    <span>Puedes instalar esta app en tu celular para abrirla como cualquier otra.</span>
+    <button class="btn-primary btn-small" id="btnInstall" type="button">Instalar</button>
+  </div>
+
+  <div class="panel">
+    <h2>Resumen</h2>
+    <div class="stat-grid" id="statGrid">
+      <div class="stat"><div class="num" id="statWeek">$0</div><div class="lab">Últimos 7 días</div></div>
+      <div class="stat"><div class="num" id="statMonth">$0</div><div class="lab">Últimos 30 días</div></div>
+      <div class="stat"><div class="num warn" id="statPending">$0</div><div class="lab">Pendiente de cobro</div></div>
+      <div class="stat"><div class="num" id="statTop">—</div><div class="lab">Producto más vendido</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Mis productos y precios</h2>
+    <p class="lede" style="margin-bottom:14px; font-size:13px;">Carga tus productos una vez, con el precio real. Cuando un pedido coincida, la app usa ese precio exacto en vez de que la IA lo adivine.</p>
+    <form id="catalogForm" class="row" style="margin-top:0; align-items:flex-start;">
+      <input type="text" id="catalogProducto" placeholder="Nombre del producto" maxlength="120" required style="flex:2; min-width:160px; background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'Inter',sans-serif; font-size:13.5px; padding:10px 12px;">
+      <input type="number" id="catalogPrecio" placeholder="Precio" min="0" max="100000000" step="1" required style="flex:1; min-width:110px; background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:13.5px; padding:10px 12px;">
+      <button class="btn-primary" type="submit">Agregar</button>
+    </form>
+    <div id="catalogList" style="margin-top:14px;"><p class="empty">Aún no cargas productos.</p></div>
+  </div>
+
+  <div class="panel">
+    <label for="chat">Conversación de WhatsApp</label>
+    <textarea id="chat" placeholder="Pega aquí el texto copiado de tu chat de WhatsApp con los pedidos..."></textarea>
+    <div class="char-counter" id="charCounter">0 / 6.000 caracteres</div>
+    <div class="row">
+      <button class="btn-primary" id="btnProcess" type="button">Ordenar pedidos</button>
+      <button class="btn-ghost" id="btnExample" type="button">Probar con un ejemplo</button>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+  </div>
+
+  <div id="draftZone"></div>
+  <div id="receiptZone"></div>
+
+  <div class="panel">
+    <div class="hist-toolbar">
+      <h2 style="margin:0;">Presupuestos guardados</h2>
+      <div class="toggle-group" id="histToggle">
+        <button class="btn-ghost active" data-mode="lineas" type="button">Por presupuesto</button>
+        <button class="btn-ghost" data-mode="clientes" type="button">Por cliente</button>
+      </div>
+    </div>
+    <div id="history"><p class="empty">Todavía no guardas ningún presupuesto.</p></div>
+
+    <div style="margin-top:16px; border-top:1px solid var(--panel-border); padding-top:14px;">
+      <label for="exportRangeType" style="margin-bottom:8px;">Exportar a CSV</label>
+      <div class="row" style="margin-top:0;">
+        <select id="exportRangeType" style="background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:9px 10px;">
+          <option value="todo">Todo el historial</option>
+          <option value="hoy">Hoy</option>
+          <option value="mes_actual">Este mes</option>
+          <option value="mes_especifico">Un mes específico...</option>
+          <option value="personalizado">Rango de fechas...</option>
+        </select>
+        <input type="month" id="exportMonthInput" style="display:none; background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:9px 10px;">
+        <input type="date" id="exportFromInput" style="display:none; background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:9px 10px;">
+        <input type="date" id="exportToInput" style="display:none; background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:9px 10px;">
+        <button class="btn-ghost btn-small" id="btnExportAllCsv" type="button">Descargar CSV</button>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px;">
+      <button class="btn-ghost btn-small" id="btnExportBackup" type="button">Descargar respaldo (JSON)</button>
+      <button class="btn-ghost btn-small" id="btnImportBackup" type="button">Restaurar respaldo</button>
+      <input type="file" id="fileImportBackup" accept="application/json" style="display:none;">
+    </div>
+  </div>
+
+  <p class="footnote">Los pedidos se interpretan automáticamente a partir del texto — revisa y ajusta los montos en el borrador antes de guardar, sobre todo si el chat no menciona un precio explícito. Tus presupuestos se guardan solo en este dispositivo. Este documento no reemplaza la boleta o factura electrónica que exige el SII.</p>
+</div>
+
+<script src="app.js" defer></script>
+</body>
+</html>

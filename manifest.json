@@ -1,0 +1,17 @@
+{
+  "name": "Ordenador de Pedidos",
+  "short_name": "Pedidos",
+  "description": "Convierte tus conversaciones de WhatsApp en boletas ordenadas, con seguimiento de pagos.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#16231C",
+  "theme_color": "#16231C",
+  "orientation": "portrait",
+  "lang": "es-CL",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

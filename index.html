@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ordenador de Pedidos</title>
-<meta name="description" content="Convierte tus conversaciones de WhatsApp en presupuestos ordenados, con seguimiento de pagos. No reemplaza la boleta o factura electrónica del SII.">
+<meta name="description" content="Convierte tus conversaciones de WhatsApp en presupuestos ordenados, con seguimiento de pagos. No reemplaza el documento tributario oficial que exige tu país.">
 <meta name="theme-color" content="#16231C">
 
 <!-- Política de seguridad de contenido: solo permite cargar recursos de este
@@ -33,6 +33,17 @@
   </div>
 
   <div class="panel">
+    <h2>País y moneda</h2>
+    <p class="lede" style="margin-bottom:14px; font-size:13px;">Elige tu país una vez — ajusta el formato de los montos y el contexto que usa la IA para estimar precios.</p>
+    <div class="row" style="margin-top:0; align-items:flex-start;">
+      <select id="countrySelect" style="background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:9px 10px; flex:1; min-width:180px;"></select>
+      <input type="text" id="customCurrencyCode" placeholder="Código de moneda (ej: USD)" maxlength="3" style="display:none; text-transform:uppercase; background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:9px 10px; width:180px;">
+      <button class="btn-primary btn-small" id="btnSaveCountry" type="button">Guardar</button>
+    </div>
+    <p class="field-error" id="countryStatus" style="display:none;"></p>
+  </div>
+
+  <div class="panel">
     <h2>Resumen</h2>
     <div class="stat-grid" id="statGrid">
       <div class="stat"><div class="num" id="statWeek">$0</div><div class="lab">Últimos 7 días</div></div>
@@ -47,10 +58,19 @@
     <p class="lede" style="margin-bottom:14px; font-size:13px;">Carga tus productos una vez, con el precio real. Cuando un pedido coincida, la app usa ese precio exacto en vez de que la IA lo adivine.</p>
     <form id="catalogForm" class="row" style="margin-top:0; align-items:flex-start;">
       <input type="text" id="catalogProducto" placeholder="Nombre del producto" maxlength="120" required style="flex:2; min-width:160px; background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'Inter',sans-serif; font-size:13.5px; padding:10px 12px;">
-      <input type="number" id="catalogPrecio" placeholder="Precio" min="0" max="100000000" step="1" required style="flex:1; min-width:110px; background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:13.5px; padding:10px 12px;">
+      <input type="number" id="catalogPrecio" placeholder="Precio" min="0" max="1000000000000" step="1" required style="flex:1; min-width:110px; background:#12201A; border:1px solid var(--panel-border); border-radius:6px; color:var(--paper); font-family:'IBM Plex Mono',monospace; font-size:13.5px; padding:10px 12px;">
       <button class="btn-primary" type="submit">Agregar</button>
     </form>
     <div id="catalogList" style="margin-top:14px;"><p class="empty">Aún no cargas productos.</p></div>
+  </div>
+
+  <div class="panel">
+    <h2>Datos de pago</h2>
+    <p class="lede" style="margin-bottom:14px; font-size:13px;">Carga una vez tus datos para recibir transferencias (banco, tipo de cuenta, número, RUT, o un link de pago). Después de enviar un presupuesto, puedes mandárselos al cliente con un clic.</p>
+    <textarea id="paymentInfo" maxlength="1000" placeholder="Ej: Banco Estado, Cuenta Vista, N° 12345678, RUT 12.345.678-9, Juan Pérez" style="min-height:90px;"></textarea>
+    <div class="row">
+      <button class="btn-primary btn-small" id="btnSavePayment" type="button">Guardar datos de pago</button>
+    </div>
   </div>
 
   <div class="panel">
@@ -101,7 +121,7 @@
     </div>
   </div>
 
-  <p class="footnote">Los pedidos se interpretan automáticamente a partir del texto — revisa y ajusta los montos en el borrador antes de guardar, sobre todo si el chat no menciona un precio explícito. Tus presupuestos se guardan solo en este dispositivo. Este documento no reemplaza la boleta o factura electrónica que exige el SII.</p>
+  <p class="footnote">Los pedidos se interpretan automáticamente a partir del texto — revisa y ajusta los montos en el borrador antes de guardar, sobre todo si el chat no menciona un precio explícito. Tus presupuestos se guardan solo en este dispositivo. Este documento no reemplaza el comprobante tributario oficial que exija la autoridad de tu país.</p>
 </div>
 
 <script src="app.js" defer></script>

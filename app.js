@@ -7,7 +7,7 @@
 // IMPORTANTE: reemplaza esta URL por la de tu propio Cloudflare Worker
 // (ver Paso 1.5 de INSTRUCCIONES.md) antes de publicar la app fuera de Claude.ai.
 // Mientras uses la app dentro de Claude.ai, este marcador no afecta la vista previa.
-const API_PROXY_URL = "https://ordenador-pedidos-api.alannaisabel1506.workers.dev/";
+const API_PROXY_URL = "https://ordenador-pedidos-api.alannaisabel1506.workers.dev";
 
 // Token compartido entre esta app y tu Worker. No es un secreto verdadero
 // (cualquiera que abra el código de la app puede leerlo) pero filtra bots
@@ -694,7 +694,8 @@ function drawReceiptCanvas(orders, fecha, hora, total){
   mctx.font = '600 15px "IBM Plex Mono", monospace';
   const itemBlocks = orders.map(function(o){
     const nameLines = wrapText(mctx, o.producto || 'Producto', W - PAD*2 - 90);
-    return { order: o, nameLines: nameLines, height: Math.max(1, nameLines.length) * 20 + 20 };
+    // alto = líneas del nombre + línea de la etiqueta de estado + línea de subtítulo + espaciado
+    return { order: o, nameLines: nameLines, height: Math.max(1, nameLines.length) * 20 + 30 + 20 };
   });
   const itemsHeight = itemBlocks.reduce(function(s, b){ return s + b.height; }, 0);
 
@@ -772,34 +773,37 @@ function drawReceiptCanvas(orders, fecha, hora, total){
   ctx.textAlign = 'left';
   itemBlocks.forEach(function(block){
     const o = block.order;
+
+    // nombre del producto (puede ocupar varias líneas si es largo)
     ctx.font = '600 15px "IBM Plex Mono", monospace';
     ctx.fillStyle = COLORS.ink;
     block.nameLines.forEach(function(line, i){
       ctx.fillText(line, PAD, y + i * 20);
     });
 
-    // badge de estado
-    const badgeText = o.pagado ? 'Pagado' : 'Pendiente';
-    ctx.font = '700 10px "IBM Plex Mono", monospace';
-    const badgeW = ctx.measureText(badgeText).width + 14;
-    const badgeX = PAD + ctx.measureText(block.nameLines[0]).width + 10;
-    const badgeY = y - 12;
-    roundRectPath(ctx, badgeX, badgeY, badgeW, 16, 3);
-    ctx.fillStyle = o.pagado ? COLORS.paidBg : COLORS.pendingBg;
-    ctx.fill();
-    ctx.fillStyle = o.pagado ? COLORS.paidFg : COLORS.pendingFg;
-    ctx.textAlign = 'left';
-    ctx.fillText(badgeText, badgeX + 7, badgeY + 11);
-
-    // monto (alineado a la derecha)
+    // monto (alineado a la derecha, siempre en la primera línea del nombre)
     ctx.font = '600 15px "IBM Plex Mono", monospace';
     ctx.fillStyle = COLORS.ink;
     ctx.textAlign = 'right';
     ctx.fillText(formatMoney(subtotal(o)), W - PAD, y);
     ctx.textAlign = 'left';
 
-    // subtítulo (cliente, cantidad, precio unitario)
-    const subY = y + block.nameLines.length * 20;
+    // etiqueta de estado: en su PROPIA línea debajo del nombre, nunca
+    // comparte espacio horizontal con el monto ni con el nombre —
+    // así un producto con nombre largo (ej. "Hamburguesa doble con papas")
+    // no la corta ni se le monta encima.
+    const badgeY = y + block.nameLines.length * 20 - 2;
+    const badgeText = o.pagado ? 'Pagado' : 'Pendiente';
+    ctx.font = '700 10px "IBM Plex Mono", monospace';
+    const badgeW = ctx.measureText(badgeText).width + 14;
+    roundRectPath(ctx, PAD, badgeY, badgeW, 16, 3);
+    ctx.fillStyle = o.pagado ? COLORS.paidBg : COLORS.pendingBg;
+    ctx.fill();
+    ctx.fillStyle = o.pagado ? COLORS.paidFg : COLORS.pendingFg;
+    ctx.fillText(badgeText, PAD + 7, badgeY + 11);
+
+    // subtítulo (cliente, cantidad, precio unitario) — debajo de la etiqueta
+    const subY = badgeY + 30;
     ctx.font = '400 11.5px "IBM Plex Mono", monospace';
     ctx.fillStyle = COLORS.inkSoft;
     const subText = (o.cliente || 'Cliente') + ' · ' + clampNumber(o.cantidad,0,100000) + ' × ' + formatMoney(o.precioUnitario||0);

@@ -1,7 +1,8 @@
 {
+  "id": "/ordenador-pedidos/",
   "name": "Ordenador de Pedidos",
   "short_name": "Pedidos",
-  "description": "Convierte tus conversaciones de WhatsApp en boletas ordenadas, con seguimiento de pagos.",
+  "description": "Convierte tus conversaciones de WhatsApp en presupuestos ordenados, con seguimiento de pagos.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
@@ -13,5 +14,15 @@
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ]
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "share_title",
+      "text": "share_text",
+      "url": "share_url"
+    }
+  }
 }
